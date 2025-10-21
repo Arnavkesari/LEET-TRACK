@@ -28,7 +28,7 @@ const FriendCard = ({ friend, onRemove }) => {
 
   const handleRemove = () => {
     if (onRemove) {
-      onRemove(friend._id);
+      onRemove(friend.leetcodeId);
     }
     setShowConfirmDelete(false);
   };
@@ -68,7 +68,7 @@ const FriendCard = ({ friend, onRemove }) => {
       whileHover={{ y: -5 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      onClick={() => navigate(`/friend/${friend._id}`)}
+      onClick={() => navigate(`/friend/${friend.leetcodeId}`)}
       className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-white/40 transition-all duration-300 relative overflow-hidden group cursor-pointer"
     >
       {/* Background Gradient */}

@@ -8,7 +8,17 @@ import { leetCodeScraper } from './leetcodeScraper.controllers.js';
 const getAllFriends = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const friends = await Friend.findByOwnerWithStats(userId);
+  // Get user with friends array
+  const user = await User.findById(userId).select('friends');
+  
+  if (!user || !user.friends || user.friends.length === 0) {
+    return res.status(200).json(
+      new ApiResponse(200, [], "No friends found")
+    );
+  }
+
+  // Get all friends by their leetcode IDs
+  const friends = await Friend.findByLeetcodeIds(user.friends);
 
   return res.status(200).json(
     new ApiResponse(200, friends, "Friends retrieved successfully")
@@ -23,22 +33,22 @@ const addFriend = asyncHandler(async (req, res) => {
     throw new ApiError(400, "LeetCode ID is required");
   }
 
-  // Check if friend already exists for this user
-  const existingFriend = await Friend.findOne({
-    owner: userId,
-    leetcodeId: leetcodeId.toLowerCase(),
-  });
+  const normalizedLeetcodeId = leetcodeId.toLowerCase().trim();
 
-  if (existingFriend) {
-    throw new ApiError(409, "Friend with this LeetCode ID already exists");
+  // Get current user
+  const user = await User.findById(userId);
+  
+  // Check if friend already exists in user's friends array
+  if (user.friends && user.friends.includes(normalizedLeetcodeId)) {
+    throw new ApiError(409, "Friend with this LeetCode ID already exists in your list");
   }
 
   // Scrape LeetCode profile with retry logic
-  console.log(`Attempting to scrape LeetCode profile for: ${leetcodeId}`);
+  console.log(`Attempting to scrape LeetCode profile for: ${normalizedLeetcodeId}`);
   let profileData;
   try {
     profileData = await leetCodeScraper.withRetry(async () => {
-      return await leetCodeScraper.scrapeLeetCodeProfile(leetcodeId);
+      return await leetCodeScraper.scrapeLeetCodeProfile(normalizedLeetcodeId);
     });
   } catch (error) {
     console.error('Scraping failed:', error);
@@ -51,22 +61,35 @@ const addFriend = asyncHandler(async (req, res) => {
 
   console.log('Profile data scraped successfully:', profileData);
 
-  // Create friend record
-  const friend = new Friend({
-    name: profileData.name || leetcodeId,
-    leetcodeId: leetcodeId.toLowerCase(),
-    owner: userId,
-    leetcodeData: profileData,
-    scrapingStatus: 'success',
-    lastScrapedAt: new Date()
-  });
+  // Check if friend exists in friends collection
+  let friend = await Friend.findOne({ leetcodeId: normalizedLeetcodeId });
 
-  await friend.save();
+  if (friend) {
+    // Friend exists - update the data
+    console.log(`Friend ${normalizedLeetcodeId} exists, updating data...`);
+    friend.name = profileData.name || normalizedLeetcodeId;
+    friend.leetcodeData = profileData;
+    friend.scrapingStatus = 'success';
+    friend.lastScrapedAt = new Date();
+    friend.isActive = true;
+    await friend.save();
+  } else {
+    // Friend doesn't exist - create new entry
+    console.log(`Creating new friend entry for ${normalizedLeetcodeId}...`);
+    friend = new Friend({
+      name: profileData.name || normalizedLeetcodeId,
+      leetcodeId: normalizedLeetcodeId,
+      leetcodeData: profileData,
+      scrapingStatus: 'success',
+      lastScrapedAt: new Date()
+    });
+    await friend.save();
+  }
 
-  // Add friend to user's friends array
+  // Add friend's leetcode ID to user's friends array
   await User.findByIdAndUpdate(
     userId,
-    { $addToSet: { friends: friend._id } },
+    { $addToSet: { friends: normalizedLeetcodeId } },
     { new: true }
   );
 
@@ -76,57 +99,58 @@ const addFriend = asyncHandler(async (req, res) => {
 });
 
 const removeFriend = asyncHandler(async (req, res) => {
-  const { friendId } = req.params;
+  const { leetcodeId } = req.params;
   const userId = req.user._id;
 
-  if (!friendId) {
-    throw new ApiError(400, "Friend ID is required");
+  if (!leetcodeId) {
+    throw new ApiError(400, "LeetCode ID is required");
   }
 
-  // Find friend and verify ownership
-  const friend = await Friend.findOne({
-    _id: friendId,
-    owner: userId,
-    isActive: true
-  });
+  const normalizedLeetcodeId = leetcodeId.toLowerCase().trim();
 
-  if (!friend) {
-    throw new ApiError(404, "Friend not found");
+  // Get current user
+  const user = await User.findById(userId);
+  
+  // Check if friend exists in user's friends array
+  if (!user.friends || !user.friends.includes(normalizedLeetcodeId)) {
+    throw new ApiError(404, "Friend not found in your list");
   }
-
-  // Soft delete - mark as inactive
-  friend.isActive = false;
-  await friend.save();
 
   // Remove from user's friends array
   await User.findByIdAndUpdate(
     userId,
-    { $pull: { friends: friendId } },
+    { $pull: { friends: normalizedLeetcodeId } },
     { new: true }
   );
 
   return res.status(200).json(
-    new ApiResponse(200, { friendId }, "Friend removed successfully")
+    new ApiResponse(200, { leetcodeId: normalizedLeetcodeId }, "Friend removed successfully")
   );
 });
 
 const updateFriendData = asyncHandler(async (req, res) => {
-  const { friendId } = req.params;
+  const { leetcodeId } = req.params;
   const userId = req.user._id;
 
-  if (!friendId) {
-    throw new ApiError(400, "Friend ID is required");
+  if (!leetcodeId) {
+    throw new ApiError(400, "LeetCode ID is required");
   }
 
-  // Find friend and verify ownership
-  const friend = await Friend.findOne({
-    _id: friendId,
-    owner: userId,
-    isActive: true
-  });
+  const normalizedLeetcodeId = leetcodeId.toLowerCase().trim();
+
+  // Get current user
+  const user = await User.findById(userId);
+  
+  // Check if friend exists in user's friends array
+  if (!user.friends || !user.friends.includes(normalizedLeetcodeId)) {
+    throw new ApiError(404, "Friend not found in your list");
+  }
+
+  // Find friend in friends collection
+  const friend = await Friend.findOne({ leetcodeId: normalizedLeetcodeId, isActive: true });
 
   if (!friend) {
-    throw new ApiError(404, "Friend not found");
+    throw new ApiError(404, "Friend data not found");
   }
 
   // Check if scraping is already in progress
@@ -149,7 +173,7 @@ const updateFriendData = asyncHandler(async (req, res) => {
     
     await friend.updateLeetCodeData(scrapedData);
 
-    const updatedFriend = await Friend.findById(friendId).select('-scrapingErrors -lastScrapingError');
+    const updatedFriend = await Friend.findOne({ leetcodeId: normalizedLeetcodeId }).select('-scrapingErrors -lastScrapingError');
 
     return res.status(200).json(
       new ApiResponse(200, updatedFriend, "Friend data updated successfully")
@@ -161,21 +185,30 @@ const updateFriendData = asyncHandler(async (req, res) => {
 });
 
 const getFriendDetails = asyncHandler(async (req, res) => {
-  const { friendId } = req.params;
+  const { leetcodeId } = req.params;
   const userId = req.user._id;
 
-  if (!friendId) {
-    throw new ApiError(400, "Friend ID is required");
+  if (!leetcodeId) {
+    throw new ApiError(400, "LeetCode ID is required");
+  }
+
+  const normalizedLeetcodeId = leetcodeId.toLowerCase().trim();
+
+  // Get current user
+  const user = await User.findById(userId);
+  
+  // Check if friend exists in user's friends array
+  if (!user.friends || !user.friends.includes(normalizedLeetcodeId)) {
+    throw new ApiError(404, "Friend not found in your list");
   }
 
   const friend = await Friend.findOne({
-    _id: friendId,
-    owner: userId,
+    leetcodeId: normalizedLeetcodeId,
     isActive: true
   }).select('-scrapingErrors -lastScrapingError');
 
   if (!friend) {
-    throw new ApiError(404, "Friend not found");
+    throw new ApiError(404, "Friend data not found");
   }
 
   return res.status(200).json(
@@ -187,12 +220,21 @@ const getFriendsLeaderboard = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const { sortBy = 'totalSolved', order = 'desc' } = req.query;
 
+  // Get user with friends array
+  const user = await User.findById(userId).select('friends');
+  
+  if (!user || !user.friends || user.friends.length === 0) {
+    return res.status(200).json(
+      new ApiResponse(200, [], "No friends found")
+    );
+  }
+
   const validSortFields = ['totalSolved', 'ranking', 'contestRating', 'streak'];
   const sortField = validSortFields.includes(sortBy) ? `leetcodeData.${sortBy}` : 'leetcodeData.totalSolved';
   const sortOrder = order === 'asc' ? 1 : -1;
 
   const friends = await Friend.find({
-    owner: userId,
+    leetcodeId: { $in: user.friends },
     isActive: true,
     scrapingStatus: 'success'
   })

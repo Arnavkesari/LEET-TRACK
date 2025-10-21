@@ -6,7 +6,7 @@ const RecentActivity = ({ friends }) => {
   // Generate recent activity from friends data
   const recentActivity = friends.flatMap(friend => 
     friend.leetcodeData?.recentSubmissions?.map(submission => ({
-      id: `${friend._id}-${submission.titleSlug || submission.title}`,
+      id: `${friend.leetcodeId}-${submission.titleSlug || submission.title}`,
       friendName: friend.name,
       friendAvatar: friend.avatar,
       problem: submission.title,

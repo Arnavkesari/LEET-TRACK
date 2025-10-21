@@ -257,7 +257,6 @@ const updateLeetCodeProfile = asyncHandler(async (req, res) => {
 
 const getUserStats = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user?._id)
-    .populate('friends')
     .select("-password -refreshToken");
 
   if (!user) {
@@ -265,7 +264,7 @@ const getUserStats = asyncHandler(async (req, res) => {
   }
 
   const stats = {
-    totalFriends: user.friends.length,
+    totalFriends: user.friends ? user.friends.length : 0,
     leetcodeData: user.leetcodeData,
     joinedDate: user.createdAt,
   };

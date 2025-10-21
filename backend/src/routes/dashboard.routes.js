@@ -14,13 +14,17 @@ router.get('/leaderboard', verifyJWT, asyncHandler(async (req, res) => {
   
   try {
     // Get user's friends for leaderboard
-    const user = await User.findById(req.user._id).populate('friends');
+    const user = await User.findById(req.user._id).select('friends');
     
     if (!user) {
       throw new ApiError(404, 'User not found');
     }
 
-    let friends = user.friends;
+    // Get friends by their leetcode IDs
+    let friends = await Friend.find({ 
+      leetcodeId: { $in: user.friends || [] },
+      isActive: true 
+    });
 
     // Apply time filters if needed
     if (timeFilter !== 'allTime') {
@@ -104,15 +108,15 @@ router.get('/profile/:username', verifyJWT, asyncHandler(async (req, res) => {
   
   try {
     // Find friend by LeetCode username
-    const friend = await Friend.findOne({ leetcodeUsername: username });
+    const friend = await Friend.findOne({ leetcodeId: username.toLowerCase() });
     
     if (!friend) {
       throw new ApiError(404, 'Friend profile not found');
     }
 
-    // Check if this friend belongs to the current user
-    const user = await User.findById(req.user._id);
-    if (!user.friends.includes(friend._id)) {
+    // Check if this friend is in the current user's friends list
+    const user = await User.findById(req.user._id).select('friends');
+    if (!user.friends.includes(friend.leetcodeId)) {
       throw new ApiError(403, 'Access denied to this profile');
     }
 
@@ -143,19 +147,20 @@ router.get('/profile/:username', verifyJWT, asyncHandler(async (req, res) => {
 }));
 
 // Update friend's LeetCode data (trigger refresh)
-router.post('/refresh/:friendId', verifyJWT, asyncHandler(async (req, res) => {
-  const { friendId } = req.params;
+router.post('/refresh/:leetcodeId', verifyJWT, asyncHandler(async (req, res) => {
+  const { leetcodeId } = req.params;
   
   try {
-    const friend = await Friend.findById(friendId);
+    const normalizedLeetcodeId = leetcodeId.toLowerCase();
+    const friend = await Friend.findOne({ leetcodeId: normalizedLeetcodeId });
     
     if (!friend) {
       throw new ApiError(404, 'Friend not found');
     }
 
-    // Check if this friend belongs to the current user
-    const user = await User.findById(req.user._id);
-    if (!user.friends.includes(friend._id)) {
+    // Check if this friend is in the current user's friends list
+    const user = await User.findById(req.user._id).select('friends');
+    if (!user.friends.includes(friend.leetcodeId)) {
       throw new ApiError(403, 'Access denied to refresh this friend');
     }
 
@@ -172,7 +177,7 @@ router.post('/refresh/:friendId', verifyJWT, asyncHandler(async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, {
         message: 'Refresh initiated',
-        friendId,
+        leetcodeId: friend.leetcodeId,
         estimatedTime: '30-60 seconds'
       }, 'Friend data refresh started'));
 
@@ -187,13 +192,17 @@ router.post('/refresh/:friendId', verifyJWT, asyncHandler(async (req, res) => {
 // Get dashboard statistics
 router.get('/dashboard-stats', verifyJWT, asyncHandler(async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('friends');
+    const user = await User.findById(req.user._id).select('friends');
     
     if (!user) {
       throw new ApiError(404, 'User not found');
     }
 
-    const friends = user.friends;
+    // Get friends by their leetcode IDs
+    const friends = await Friend.find({ 
+      leetcodeId: { $in: user.friends || [] },
+      isActive: true 
+    });
     
     // Calculate statistics
     const stats = {
@@ -209,7 +218,7 @@ router.get('/dashboard-stats', verifyJWT, asyncHandler(async (req, res) => {
     const recentActivity = friends
       .flatMap(friend => 
         (friend.leetcodeData.recentSubmissions || []).map(submission => ({
-          friendId: friend._id,
+          friendId: friend.leetcodeId,
           friendName: friend.name,
           friendAvatar: friend.avatar,
           ...submission

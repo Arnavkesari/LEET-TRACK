@@ -9,17 +9,14 @@ const friendSchema = new mongoose.Schema({
   leetcodeId: {
     type: String,
     required: true,
-    trim: true
+    unique: true,
+    trim: true,
+    lowercase: true,
+    index: true
   },
   avatar: {
     type: String,
     default: ''
-  },
-  owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    index: true
   },
   leetcodeData: {
     totalSolved: {
@@ -130,10 +127,10 @@ const friendSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Compound indexes for efficient queries
-friendSchema.index({ owner: 1, leetcodeId: 1 }, { unique: true });
-friendSchema.index({ owner: 1, isActive: 1 });
+// Index for efficient queries
+friendSchema.index({ leetcodeId: 1 }, { unique: true });
 friendSchema.index({ lastScrapedAt: 1 });
+friendSchema.index({ isActive: 1 });
 
 // Virtual for friend's full LeetCode profile URL
 friendSchema.virtual('leetcodeProfileUrl').get(function() {
@@ -197,9 +194,12 @@ friendSchema.statics.findNeedingScraping = function(limit = 10) {
   .sort({ lastScrapedAt: 1 });
 };
 
-// Static method to get friends by owner with stats
-friendSchema.statics.findByOwnerWithStats = function(ownerId) {
-  return this.find({ owner: ownerId, isActive: true })
+// Static method to get friends by leetcode IDs with stats
+friendSchema.statics.findByLeetcodeIds = function(leetcodeIds) {
+  return this.find({ 
+    leetcodeId: { $in: leetcodeIds }, 
+    isActive: true 
+  })
     .select('-scrapingErrors -lastScrapingError')
     .sort({ 'leetcodeData.totalSolved': -1 });
 };

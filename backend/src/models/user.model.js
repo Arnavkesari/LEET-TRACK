@@ -83,8 +83,9 @@ const userSchema = new mongoose.Schema({
     default: true
   },
   friends: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Friend'
+    type: String,
+    trim: true,
+    lowercase: true
   }],
   lastLogin: {
     type: Date,
@@ -171,28 +172,21 @@ userSchema.methods.updateLeetCodeData = function(leetcodeData) {
 };
 
 // Instance method to add friend
-userSchema.methods.addFriend = async function(friendId) {
-  if (!this.friends.includes(friendId)) {
-    this.friends.push(friendId);
+userSchema.methods.addFriend = async function(leetcodeId) {
+  const normalizedId = leetcodeId.toLowerCase().trim();
+  if (!this.friends.includes(normalizedId)) {
+    this.friends.push(normalizedId);
     await this.save();
   }
   return this;
 };
 
 // Instance method to remove friend
-userSchema.methods.removeFriend = async function(friendId) {
-  this.friends = this.friends.filter(id => !id.equals(friendId));
+userSchema.methods.removeFriend = async function(leetcodeId) {
+  const normalizedId = leetcodeId.toLowerCase().trim();
+  this.friends = this.friends.filter(id => id !== normalizedId);
   await this.save();
   return this;
-};
-
-// Static method to find user with friends populated
-userSchema.statics.findWithFriends = function(userId) {
-  return this.findById(userId).populate({
-    path: 'friends',
-    match: { isActive: true },
-    select: '-scrapingErrors -lastScrapingError'
-  });
 };
 
 const User = mongoose.model('User', userSchema);

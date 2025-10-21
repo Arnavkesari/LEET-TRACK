@@ -21,7 +21,7 @@ router.route("/bulk-update").post(bulkUpdateFriendsData);
 
 // Friends CRUD operations
 router.route("/").get(getAllFriends).post(addFriend);
-router.route("/:friendId").get(getFriendDetails).delete(removeFriend);
-router.route("/:friendId/update").patch(updateFriendData);
+router.route("/:leetcodeId").get(getFriendDetails).delete(removeFriend);
+router.route("/:leetcodeId/update").patch(updateFriendData);
 
 export default router;

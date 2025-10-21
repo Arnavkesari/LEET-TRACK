@@ -76,10 +76,10 @@ const Dashboard = () => {
     }
   };
 
-  const handleRemoveFriend = async (friendId) => {
+  const handleRemoveFriend = async (leetcodeId) => {
     try {
-      await friendsAPI.removeFriend(friendId);
-      setFriends(friends.filter(f => f._id !== friendId));
+      await friendsAPI.removeFriend(leetcodeId);
+      setFriends(friends.filter(f => f.leetcodeId !== leetcodeId));
       await fetchData(); // Refresh stats
     } catch (err) {
       console.error('Failed to remove friend:', err);
@@ -202,9 +202,9 @@ const Dashboard = () => {
                 {friends.length > 0 ? (
                   friends.map((friend) => (
                     <FriendCard
-                      key={friend._id}
+                      key={friend.leetcodeId}
                       friend={friend}
-                      onRemove={() => handleRemoveFriend(friend._id)}
+                      onRemove={() => handleRemoveFriend(friend.leetcodeId)}
                     />
                   ))
                 ) : (
