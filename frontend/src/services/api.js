@@ -99,6 +99,11 @@ export const friendsAPI = {
   getLeaderboard: async (sortBy = 'totalSolved', timeFilter = 'allTime') => {
     return makeRequest(`/friends/leaderboard?sortBy=${sortBy}&timeFilter=${timeFilter}`);
   },
+  
+  // Get friend details by ID
+  getFriendById: async (friendId) => {
+    return makeRequest(`/friends/${friendId}`);
+  },
 };
 
 // Dashboard API

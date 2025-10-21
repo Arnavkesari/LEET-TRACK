@@ -28,99 +28,69 @@ const FriendProfile = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
-    // Mock API call - replace with actual API
-    const mockFriendData = {
-      id: 1,
-      name: "Alex Johnson",
-      leetcodeUsername: "alexcoder",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-      bio: "Software Engineer passionate about algorithms and data structures. Always up for a coding challenge!",
-      location: "San Francisco, CA",
-      joinedDate: "2021-03-15",
-      stats: {
-        totalSolved: 845,
-        easy: 285,
-        medium: 427,
-        hard: 133,
-        ranking: 5420,
-        contestRating: 2150,
-        streak: 42,
-        maxStreak: 67,
-        weeklyProgress: 15,
-        monthlyProgress: 67,
-        acceptanceRate: 73.2,
-        totalSubmissions: 1156
-      },
-      badges: ['Problem Solver', 'Contest Expert', 'Daily Warrior', 'Algorithm Master'],
-      skills: ['Dynamic Programming', 'Graph Algorithms', 'Binary Trees', 'Backtracking'],
-      recentSubmissions: [
-        {
-          id: 1,
-          problem: "Longest Increasing Subsequence",
-          difficulty: "Medium",
-          status: "Accepted",
-          runtime: "72ms",
-          memory: "45.2MB",
-          timestamp: "2 hours ago",
-          language: "Python3"
-        },
-        {
-          id: 2,
-          problem: "Binary Tree Maximum Path Sum",
-          difficulty: "Hard",
-          status: "Accepted",
-          runtime: "156ms",
-          memory: "23.1MB",
-          timestamp: "4 hours ago",
-          language: "Java"
-        },
-        {
-          id: 3,
-          problem: "Valid Parentheses",
-          difficulty: "Easy",
-          status: "Accepted",
-          runtime: "32ms",
-          memory: "14.2MB",
-          timestamp: "6 hours ago",
-          language: "C++"
-        },
-        {
-          id: 4,
-          problem: "Word Break II",
-          difficulty: "Hard",
-          status: "Wrong Answer",
-          runtime: "-",
-          memory: "-",
-          timestamp: "8 hours ago",
-          language: "Python3"
-        }
-      ],
-      activityData: [
-        { date: '2024-01-01', count: 3 },
-        { date: '2024-01-02', count: 5 },
-        { date: '2024-01-03', count: 2 },
-        { date: '2024-01-04', count: 4 },
-        { date: '2024-01-05', count: 1 },
-        { date: '2024-01-06', count: 6 },
-        { date: '2024-01-07', count: 3 }
-      ],
-      progressData: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        easy: [45, 52, 61, 73, 89, 95],
-        medium: [23, 31, 45, 67, 89, 127],
-        hard: [5, 8, 12, 18, 25, 29]
-      },
-      contests: [
-        { name: "Weekly Contest 385", rank: 234, rating: 2150, change: +25 },
-        { name: "Biweekly Contest 125", rank: 189, rating: 2125, change: +18 },
-        { name: "Weekly Contest 384", rank: 445, rating: 2107, change: -12 }
-      ]
+    const fetchFriendData = async () => {
+      try {
+        setLoading(true);
+        const { friendsAPI } = await import('../services/api');
+        const friendData = await friendsAPI.getFriendById(username);
+        
+        // Transform backend data to match component structure
+        const transformedData = {
+          id: friendData._id,
+          name: friendData.name,
+          leetcodeUsername: friendData.leetcodeId,
+          avatar: friendData.avatar || `https://ui-avatars.com/api/?name=${friendData.name}&background=random`,
+          bio: `LeetCode enthusiast with ${friendData.leetcodeData?.totalSolved || 0} problems solved`,
+          location: "Unknown",
+          joinedDate: new Date(friendData.createdAt).toLocaleDateString(),
+          stats: {
+            totalSolved: friendData.leetcodeData?.totalSolved || 0,
+            easy: friendData.leetcodeData?.easySolved || 0,
+            medium: friendData.leetcodeData?.mediumSolved || 0,
+            hard: friendData.leetcodeData?.hardSolved || 0,
+            ranking: friendData.leetcodeData?.ranking || 0,
+            contestRating: friendData.leetcodeData?.contestRating || 0,
+            streak: friendData.leetcodeData?.streak || 0,
+            maxStreak: friendData.leetcodeData?.streak || 0,
+            weeklyProgress: 0,
+            monthlyProgress: 0,
+            acceptanceRate: friendData.leetcodeData?.acceptanceRate || 0,
+            totalSubmissions: friendData.leetcodeData?.totalSolved || 0
+          },
+          badges: friendData.leetcodeData?.badges?.map(b => b.displayName || b.name) || [],
+          skills: [],
+          recentSubmissions: (friendData.leetcodeData?.recentSubmissions || []).map((sub, idx) => ({
+            id: idx + 1,
+            problem: sub.title || 'Unknown Problem',
+            difficulty: 'Medium',
+            status: sub.statusDisplay || 'Unknown',
+            runtime: '-',
+            memory: '-',
+            timestamp: new Date(sub.timestamp).toLocaleString(),
+            language: sub.lang || 'Unknown'
+          })),
+          activityData: [],
+          progressData: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            easy: [0, 0, 0, 0, 0, friendData.leetcodeData?.easySolved || 0],
+            medium: [0, 0, 0, 0, 0, friendData.leetcodeData?.mediumSolved || 0],
+            hard: [0, 0, 0, 0, 0, friendData.leetcodeData?.hardSolved || 0]
+          },
+          contests: []
+        };
+        
+        setFriend(transformedData);
+      } catch (error) {
+        console.error('Failed to fetch friend data:', error);
+        setFriend(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setTimeout(() => {
-      setFriend(mockFriendData);
-      setLoading(false);
-    }, 1000);
+    if (username) {
+      fetchFriendData();
+    }
   }, [username]);
 
   const tabs = [

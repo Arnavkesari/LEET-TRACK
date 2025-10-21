@@ -77,7 +77,7 @@ const LeaderboardCard = ({ friend, rank, sortBy }) => {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.01 }}
       className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-      onClick={() => navigate(`/profile/${friend.leetcodeId}`)}
+      onClick={() => navigate(`/friend/${friend._id}`)}
     >
       <div className="flex items-center justify-between">
         {/* Left side - Rank, Avatar, Name */}

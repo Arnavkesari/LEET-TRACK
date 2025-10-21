@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FaUser, 
@@ -12,6 +13,7 @@ import {
 } from 'react-icons/fa';
 
 const FriendCard = ({ friend, onRemove }) => {
+  const navigate = useNavigate();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -66,7 +68,8 @@ const FriendCard = ({ friend, onRemove }) => {
       whileHover={{ y: -5 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-white/40 transition-all duration-300 relative overflow-hidden group"
+      onClick={() => navigate(`/friend/${friend._id}`)}
+      className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 hover:border-white/40 transition-all duration-300 relative overflow-hidden group cursor-pointer"
     >
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -116,7 +119,10 @@ const FriendCard = ({ friend, onRemove }) => {
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => setShowConfirmDelete(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowConfirmDelete(true);
+            }}
             className="w-8 h-8 bg-red-500/20 hover:bg-red-500/30 rounded-lg flex items-center justify-center text-red-400 hover:text-red-300 transition-all duration-300"
           >
             <FaTrash className="text-xs" />
