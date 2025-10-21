@@ -22,6 +22,11 @@ const USER_PROFILE_QUERY = `
         }
       }
     }
+    recentAcSubmissionList(username: $username, limit: 15) {
+      title
+      titleSlug
+      timestamp
+    }
   }
 `;
 
@@ -207,6 +212,7 @@ class LeetCodeScraper {
       const user = profileResponse.matchedUser;
       const contestData = contestResponse?.userContestRanking;
       const calendarData = calendarResponse?.matchedUser?.userCalendar;
+      const recentSubmissions = profileResponse?.recentAcSubmissionList || [];
 
       const submitStats = user.submitStats?.acSubmissionNum || [];
       const easyStats = submitStats.find(s => s.difficulty === 'Easy') || { count: 0 };
@@ -222,6 +228,11 @@ class LeetCodeScraper {
         ranking: user.profile?.ranking || 0,
         contestRating: Math.floor(contestData?.rating || 0),
         streak: calendarData?.streak || 0,
+        recentSubmissions: recentSubmissions.map(sub => ({
+          title: sub.title,
+          titleSlug: sub.titleSlug,
+          timestamp: sub.timestamp ? new Date(parseInt(sub.timestamp) * 1000) : new Date()
+        }))
       };
 
       return result;
