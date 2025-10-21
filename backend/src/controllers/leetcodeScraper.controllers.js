@@ -21,11 +21,20 @@ const USER_PROFILE_QUERY = `
           count
         }
       }
+      submitStatsGlobal {
+        acSubmissionNum {
+          difficulty
+          count
+          submissions
+        }
+      }
     }
-    recentAcSubmissionList(username: $username, limit: 15) {
+    recentSubmissionList(username: $username) {
       title
       titleSlug
       timestamp
+      statusDisplay
+      lang
     }
   }
 `;
@@ -212,7 +221,7 @@ class LeetCodeScraper {
       const user = profileResponse.matchedUser;
       const contestData = contestResponse?.userContestRanking;
       const calendarData = calendarResponse?.matchedUser?.userCalendar;
-      const recentSubmissions = profileResponse?.recentAcSubmissionList || [];
+      const recentSubmissions = profileResponse?.recentSubmissionList || [];
 
       const submitStats = user.submitStats?.acSubmissionNum || [];
       const easyStats = submitStats.find(s => s.difficulty === 'Easy') || { count: 0 };
@@ -228,11 +237,16 @@ class LeetCodeScraper {
         ranking: user.profile?.ranking || 0,
         contestRating: Math.floor(contestData?.rating || 0),
         streak: calendarData?.streak || 0,
-        recentSubmissions: recentSubmissions.map(sub => ({
-          title: sub.title,
-          titleSlug: sub.titleSlug,
-          timestamp: sub.timestamp ? new Date(parseInt(sub.timestamp) * 1000) : new Date()
-        }))
+        recentSubmissions: recentSubmissions
+          .filter(sub => sub.statusDisplay === 'Accepted')
+          .slice(0, 50)
+          .map(sub => ({
+            title: sub.title,
+            titleSlug: sub.titleSlug,
+            timestamp: sub.timestamp ? new Date(parseInt(sub.timestamp) * 1000) : new Date(),
+            statusDisplay: sub.statusDisplay || 'Accepted',
+            lang: sub.lang || 'Unknown'
+          }))
       };
 
       return result;
