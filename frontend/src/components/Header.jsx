@@ -120,20 +120,6 @@ const Header = () => {
                       <FaUser className="text-sm" />
                       Profile
                     </a>
-                    <a
-                      href="/settings"
-                      className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
-                    >
-                      <FaCog className="text-sm" />
-                      Settings
-                    </a>
-                    <a
-                      href="/leetcode-profile"
-                      className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
-                    >
-                      <FaCode className="text-sm" />
-                      My LeetCode
-                    </a>
                     <div className="border-t border-white/20 my-1"></div>
                     <button
                       onClick={handleLogout}
