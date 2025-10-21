@@ -228,6 +228,7 @@ class LeetCodeScraper {
 
     } catch (error) {
       console.error(`Error scraping LeetCode profile for ${username}:`, error.message);
+      console.error('Full error:', error);
       
       // Handle specific error types
       if (error.message.includes('Target closed') || error.message.includes('Connection closed')) {

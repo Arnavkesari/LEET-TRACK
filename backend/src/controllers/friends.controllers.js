@@ -34,13 +34,22 @@ const addFriend = asyncHandler(async (req, res) => {
   }
 
   // Scrape LeetCode profile with retry logic
-  const profileData = await leetCodeScraper.withRetry(async () => {
-    return await leetCodeScraper.scrapeLeetCodeProfile(leetcodeId);
-  });
+  console.log(`Attempting to scrape LeetCode profile for: ${leetcodeId}`);
+  let profileData;
+  try {
+    profileData = await leetCodeScraper.withRetry(async () => {
+      return await leetCodeScraper.scrapeLeetCodeProfile(leetcodeId);
+    });
+  } catch (error) {
+    console.error('Scraping failed:', error);
+    throw new ApiError(500, error.message || "Failed to fetch LeetCode profile");
+  }
   
   if (!profileData) {
     throw new ApiError(404, "LeetCode profile not found. Please check the username.");
   }
+
+  console.log('Profile data scraped successfully:', profileData);
 
   // Create friend record
   const friend = new Friend({

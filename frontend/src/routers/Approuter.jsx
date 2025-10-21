@@ -5,6 +5,7 @@ import LandingPage from '../pages/LandingPage';
 import Dashboard from '../pages/Dashboard';
 import Leaderboard from '../pages/Leaderboard';
 import FriendProfile from '../pages/FriendProfile';
+import Challenges from '../pages/Challenges';
 
 // Loading component
 const LoadingSpinner = () => (
@@ -95,6 +96,14 @@ const AppRouter = () => {
         element={
           <ProtectedRoute>
             <FriendProfile />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/challenges" 
+        element={
+          <ProtectedRoute>
+            <Challenges />
           </ProtectedRoute>
         } 
       />

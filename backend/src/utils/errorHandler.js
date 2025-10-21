@@ -10,11 +10,12 @@ const errorHandler = (err, req, res, next) => {
     }
 
     // For unexpected errors
-    console.error(err);
-    return res.status(500).json({
+    console.error('Unexpected error:', err);
+    const statusCode = err.statusCode || err.status || 500;
+    return res.status(statusCode).json({
         success: false,
-        message: "Internal Server Error",
-        error: err.message,
+        message: err.message || "Internal Server Error",
+        error: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     });
 };
 

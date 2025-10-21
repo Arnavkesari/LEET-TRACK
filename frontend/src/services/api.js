@@ -3,23 +3,39 @@ const API_BASE_URL = '/api/v1'; // Using proxy, so relative path
 
 // Helper function to make HTTP requests
 const makeRequest = async (url, options = {}) => {
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    credentials: 'include', // Include cookies for auth
-    ...options,
-  };
+  try {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      credentials: 'include', // Include cookies for auth
+      ...options,
+    };
 
-  const response = await fetch(`${API_BASE_URL}${url}`, config);
-  const data = await response.json();
+    const response = await fetch(`${API_BASE_URL}${url}`, config);
+    
+    // Check if response has content before parsing JSON
+    const contentType = response.headers.get('content-type');
+    let data = null;
+    
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text();
+      data = text ? JSON.parse(text) : null;
+    }
 
-  if (!response.ok) {
-    throw new Error(data.message || 'Request failed');
+    if (!response.ok) {
+      throw new Error(data?.message || `Request failed with status ${response.status}`);
+    }
+
+    return data?.data || data;
+  } catch (error) {
+    // If it's a network error (server not running, CORS, etc.)
+    if (error.message.includes('fetch')) {
+      throw new Error('Cannot connect to server. Please make sure the backend is running.');
+    }
+    throw error;
   }
-
-  return data.data || data;
 };
 
 // Authentication APIs
@@ -148,6 +164,77 @@ export const userAPI = {
   },
 };
 
+// Challenge APIs
+export const challengesAPI = {
+  // Create a new challenge
+  createChallenge: async (challengeData) => {
+    return makeRequest('/challenges', {
+      method: 'POST',
+      body: JSON.stringify(challengeData),
+    });
+  },
+
+  // Get all challenges
+  getAllChallenges: async (status) => {
+    const url = status ? `/challenges?status=${status}` : '/challenges';
+    return makeRequest(url);
+  },
+
+  // Get active challenges
+  getActiveChallenges: async () => {
+    return makeRequest('/challenges/active');
+  },
+
+  // Get pending challenges
+  getPendingChallenges: async () => {
+    return makeRequest('/challenges/pending');
+  },
+
+  // Get challenge history
+  getChallengeHistory: async (limit = 10) => {
+    return makeRequest(`/challenges/history?limit=${limit}`);
+  },
+
+  // Get challenge details
+  getChallengeDetails: async (challengeId) => {
+    return makeRequest(`/challenges/${challengeId}`);
+  },
+
+  // Accept a challenge
+  acceptChallenge: async (challengeId) => {
+    return makeRequest(`/challenges/${challengeId}/accept`, {
+      method: 'PATCH',
+    });
+  },
+
+  // Decline a challenge
+  declineChallenge: async (challengeId) => {
+    return makeRequest(`/challenges/${challengeId}/decline`, {
+      method: 'PATCH',
+    });
+  },
+
+  // Cancel a challenge
+  cancelChallenge: async (challengeId) => {
+    return makeRequest(`/challenges/${challengeId}/cancel`, {
+      method: 'PATCH',
+    });
+  },
+
+  // Update challenge progress
+  updateProgress: async (challengeId, solved) => {
+    return makeRequest(`/challenges/${challengeId}/progress`, {
+      method: 'PATCH',
+      body: JSON.stringify({ solved }),
+    });
+  },
+
+  // Get challenge statistics
+  getChallengeStats: async () => {
+    return makeRequest('/challenges/stats');
+  },
+};
+
 // Main API object with all methods
 const api = {
   // Auth methods
@@ -174,6 +261,19 @@ const api = {
   changePassword: userAPI.changePassword,
   updateLeetCodeProfile: userAPI.updateLeetCodeProfile,
   getUserStats: userAPI.getUserStats,
+
+  // Challenge methods
+  createChallenge: challengesAPI.createChallenge,
+  getAllChallenges: challengesAPI.getAllChallenges,
+  getActiveChallenges: challengesAPI.getActiveChallenges,
+  getPendingChallenges: challengesAPI.getPendingChallenges,
+  getChallengeHistory: challengesAPI.getChallengeHistory,
+  getChallengeDetails: challengesAPI.getChallengeDetails,
+  acceptChallenge: challengesAPI.acceptChallenge,
+  declineChallenge: challengesAPI.declineChallenge,
+  cancelChallenge: challengesAPI.cancelChallenge,
+  updateChallengeProgress: challengesAPI.updateProgress,
+  getChallengeStats: challengesAPI.getChallengeStats,
 };
 
 export default api;

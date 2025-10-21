@@ -5,27 +5,18 @@ import {
   FiArrowLeft, 
   FiExternalLink, 
   FiTrendingUp, 
-  FiCalendar,
   FiAward,
   FiTarget,
-  FiZap,
-  FiClock,
-  FiBarChart2,
-  FiGitBranch
+  FiZap
 } from 'react-icons/fi';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import ProfileStats from '../components/ProfileStats';
-import ActivityChart from '../components/ActivityChart';
-import RecentSubmissions from '../components/RecentSubmissions';
-import ProgressChart from '../components/ProgressChart';
 
 const FriendProfile = () => {
   const { username } = useParams();
   const navigate = useNavigate();
   const [friend, setFriend] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     const fetchFriendData = async () => {
@@ -56,27 +47,7 @@ const FriendProfile = () => {
             monthlyProgress: 0,
             acceptanceRate: friendData.leetcodeData?.acceptanceRate || 0,
             totalSubmissions: friendData.leetcodeData?.totalSolved || 0
-          },
-          badges: friendData.leetcodeData?.badges?.map(b => b.displayName || b.name) || [],
-          skills: [],
-          recentSubmissions: (friendData.leetcodeData?.recentSubmissions || []).map((sub, idx) => ({
-            id: idx + 1,
-            problem: sub.title || 'Unknown Problem',
-            difficulty: 'Medium',
-            status: sub.statusDisplay || 'Unknown',
-            runtime: '-',
-            memory: '-',
-            timestamp: new Date(sub.timestamp).toLocaleString(),
-            language: sub.lang || 'Unknown'
-          })),
-          activityData: [],
-          progressData: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            easy: [0, 0, 0, 0, 0, friendData.leetcodeData?.easySolved || 0],
-            medium: [0, 0, 0, 0, 0, friendData.leetcodeData?.mediumSolved || 0],
-            hard: [0, 0, 0, 0, 0, friendData.leetcodeData?.hardSolved || 0]
-          },
-          contests: []
+          }
         };
         
         setFriend(transformedData);
@@ -93,22 +64,15 @@ const FriendProfile = () => {
     }
   }, [username]);
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: FiBarChart2 },
-    { id: 'submissions', label: 'Submissions', icon: FiGitBranch },
-    { id: 'progress', label: 'Progress', icon: FiTrendingUp },
-    { id: 'contests', label: 'Contests', icon: FiAward }
-  ];
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <Header />
         <div className="flex items-center justify-center h-96">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"
+            className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
           />
         </div>
         <Footer />
@@ -118,19 +82,19 @@ const FriendProfile = () => {
 
   if (!friend) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <Header />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-2xl font-bold text-white mb-2">
               Friend not found
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-gray-400 mb-6">
               The profile you're looking for doesn't exist.
             </p>
             <button
               onClick={() => navigate('/dashboard')}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg shadow-lg text-sm font-medium text-white transition-all"
             >
               <FiArrowLeft className="mr-2 h-4 w-4" />
               Back to Dashboard
@@ -143,7 +107,7 @@ const FriendProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -155,7 +119,7 @@ const FriendProfile = () => {
         >
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            className="inline-flex items-center text-gray-300 hover:text-white transition-colors"
           >
             <FiArrowLeft className="mr-2 h-4 w-4" />
             Back
@@ -166,30 +130,36 @@ const FriendProfile = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-8"
+          className="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700 mb-8 overflow-hidden"
         >
+          <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 px-6 py-4 border-b border-gray-700">
+            <h2 className="text-lg font-semibold text-white">Profile Overview</h2>
+          </div>
           <div className="px-6 py-8">
             <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
               {/* Avatar */}
-              <img
-                src={friend.avatar}
-                alt={friend.name}
-                className="h-24 w-24 rounded-full object-cover"
-              />
+              <div className="relative">
+                <img
+                  src={friend.avatar}
+                  alt={friend.name}
+                  className="h-28 w-28 rounded-full object-cover border-4 border-blue-500/30 shadow-lg"
+                />
+                <div className="absolute -bottom-1 -right-1 bg-green-500 h-6 w-6 rounded-full border-4 border-gray-800"></div>
+              </div>
               
               {/* Info */}
               <div className="flex-1">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-3xl font-bold text-white mb-1">
                       {friend.name}
                     </h1>
-                    <p className="text-lg text-gray-600 dark:text-gray-400">
+                    <p className="text-lg text-blue-400 font-medium">
                       @{friend.leetcodeUsername}
                     </p>
                     {friend.location && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        📍 {friend.location}
+                      <p className="text-sm text-gray-400 mt-2 flex items-center gap-1">
+                        <span>📍</span> {friend.location}
                       </p>
                     )}
                   </div>
@@ -201,7 +171,7 @@ const FriendProfile = () => {
                       href={`https://leetcode.com/${friend.leetcodeUsername}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg shadow-lg text-sm font-medium text-white transition-all"
                     >
                       <FiExternalLink className="mr-2 h-4 w-4" />
                       View on LeetCode
@@ -210,164 +180,147 @@ const FriendProfile = () => {
                 </div>
 
                 {friend.bio && (
-                  <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-2xl">
+                  <p className="mt-4 text-gray-300 max-w-2xl leading-relaxed">
                     {friend.bio}
                   </p>
                 )}
-
-                {/* Badges */}
-                {friend.badges && friend.badges.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {friend.badges.map((badge, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                      >
-                        {badge}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Skills */}
-                {friend.skills && friend.skills.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {friend.skills.map((skill, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* Quick Stats */}
+        {/* Stats Box */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
         >
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-            <FiTarget className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {friend.stats.totalSolved}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Problems Solved</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-            <FiAward className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {friend.stats.contestRating}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Contest Rating</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-            <FiZap className="h-6 w-6 text-orange-600 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {friend.stats.streak}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Current Streak</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-            <FiTrendingUp className="h-6 w-6 text-green-600 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              #{friend.stats.ranking.toLocaleString()}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Global Rank</p>
-          </div>
-        </motion.div>
-
-        {/* Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-8"
-        >
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="-mb-px flex space-x-8">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300'
-                  }`}
-                >
-                  <tab.icon className="mr-2 h-4 w-4" />
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </motion.div>
-
-        {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          {activeTab === 'overview' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <ProfileStats friend={friend} />
-              <ActivityChart data={friend.activityData} />
-            </div>
-          )}
-          
-          {activeTab === 'submissions' && (
-            <RecentSubmissions submissions={friend.recentSubmissions} />
-          )}
-          
-          {activeTab === 'progress' && (
-            <ProgressChart data={friend.progressData} />
-          )}
-          
-          {activeTab === 'contests' && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Recent Contests
-                </h3>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  {friend.contests.map((contest, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white">
-                          {contest.name}
-                        </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Rank: #{contest.rank}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-gray-900 dark:text-white">
-                          {contest.rating}
-                        </div>
-                        <div className={`text-sm ${
-                          contest.change > 0 ? 'text-green-600' : contest.change < 0 ? 'text-red-600' : 'text-gray-600'
-                        }`}>
-                          {contest.change > 0 ? '+' : ''}{contest.change}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700 p-6">
+            <h2 className="text-2xl font-bold text-white mb-8 text-center">Statistics</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                className="text-center mx-auto w-full max-w-xs bg-gray-700/30 rounded-xl p-6 border border-gray-600 hover:border-blue-500 transition-all"
+              >
+                <div className="bg-blue-500/20 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-3">
+                  <FiTarget className="h-6 w-6 text-blue-400" />
                 </div>
+                <p className="text-3xl font-bold text-white mb-1">
+                  {friend.stats.totalSolved}
+                </p>
+                <p className="text-xs text-gray-400 font-medium">Total Solved</p>
+              </motion.div>
+              
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                className="text-center mx-auto w-full max-w-xs bg-gray-700/30 rounded-xl p-6 border border-gray-600 hover:border-purple-500 transition-all"
+              >
+                <div className="bg-purple-500/20 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-3">
+                  <FiAward className="h-6 w-6 text-purple-400" />
+                </div>
+                <p className="text-3xl font-bold text-white mb-1">
+                  {friend.stats.contestRating}
+                </p>
+                <p className="text-xs text-gray-400 font-medium">Contest Rating</p>
+              </motion.div>
+              
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                className="text-center mx-auto w-full max-w-xs bg-gray-700/30 rounded-xl p-6 border border-gray-600 hover:border-orange-500 transition-all"
+              >
+                <div className="bg-orange-500/20 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-3">
+                  <FiZap className="h-6 w-6 text-orange-400" />
+                </div>
+                <p className="text-3xl font-bold text-white mb-1">
+                  {friend.stats.streak}
+                </p>
+                <p className="text-xs text-gray-400 font-medium">Current Streak</p>
+              </motion.div>
+              
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                className="text-center mx-auto w-full max-w-xs bg-gray-700/30 rounded-xl p-6 border border-gray-600 hover:border-green-500 transition-all"
+              >
+                <div className="bg-green-500/20 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-3">
+                  <FiTrendingUp className="h-6 w-6 text-green-400" />
+                </div>
+                <p className="text-3xl font-bold text-white mb-1">
+                  #{friend.stats.ranking.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-400 font-medium">Global Rank</p>
+              </motion.div>
+            </div>
+
+            {/* Difficulty Breakdown */}
+            <div className="mt-11 max-w-2xl mx-auto">
+              <h3 className="text-xl font-bold text-white mb-6 text-center">Problem Difficulty Breakdown</h3>
+              <div className="bg-gray-700/30 rounded-xl p-8 border border-gray-600 space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-lg font-semibold text-green-400 flex items-center gap-2">
+                      <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                      Easy
+                    </span>
+                    <span className="text-xl font-bold text-white">{friend.stats.easy}</span>
+                  </div>
+                  <div className="bg-gray-600/50 rounded-full h-5 overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${friend.stats.easy > 0 ? Math.min((friend.stats.easy / 500) * 100, 100) : 0}%` }}
+                      transition={{ duration: 1, delay: 0.3 }}
+                      className="bg-gradient-to-r from-green-500 to-green-400 h-5 rounded-full shadow-lg shadow-green-500/50"
+                    />
+                  </div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-lg font-semibold text-yellow-400 flex items-center gap-2">
+                      <span className="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                      Medium
+                    </span>
+                    <span className="text-xl font-bold text-white">{friend.stats.medium}</span>
+                  </div>
+                  <div className="bg-gray-600/50 rounded-full h-5 overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${friend.stats.medium > 0 ? Math.min((friend.stats.medium / 1000) * 100, 100) : 0}%` }}
+                      transition={{ duration: 1, delay: 0.4 }}
+                      className="bg-gradient-to-r from-yellow-500 to-yellow-400 h-5 rounded-full shadow-lg shadow-yellow-500/50"
+                    />
+                  </div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-lg font-semibold text-red-400 flex items-center gap-2">
+                      <span className="w-3 h-3 bg-red-500 rounded-full"></span>
+                      Hard
+                    </span>
+                    <span className="text-xl font-bold text-white">{friend.stats.hard}</span>
+                  </div>
+                  <div className="bg-gray-600/50 rounded-full h-5 overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${friend.stats.hard > 0 ? Math.min((friend.stats.hard / 500) * 100, 100) : 0}%` }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                      className="bg-gradient-to-r from-red-500 to-red-400 h-5 rounded-full shadow-lg shadow-red-500/50"
+                    />
+                  </div>
+                </motion.div>
               </div>
             </div>
-          )}
+          </div>
         </motion.div>
       </main>
 

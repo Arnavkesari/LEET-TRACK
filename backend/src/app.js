@@ -20,6 +20,7 @@ import authRouter from "./routes/auth.routes.js"
 import friendsRouter from "./routes/friends.routes.js"
 import scraperRouter from "./routes/scraper.routes.js"
 import dashboardRouter from "./routes/dashboard.routes.js"
+import challengesRouter from "./routes/challenges.routes.js"
 import { errorHandler } from "./utils/errorHandler.js";
 
 // routes declaration
@@ -28,6 +29,7 @@ app.use("/api/v1/auth", authRouter)
 app.use("/api/v1/friends", friendsRouter)
 app.use("/api/v1/scraper", scraperRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
+app.use("/api/v1/challenges", challengesRouter)
 
 // Centralized Error Handling
 app.use(errorHandler);
