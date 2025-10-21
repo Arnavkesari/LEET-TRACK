@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FiCheck, FiX, FiClock } from 'react-icons/fi';
+import { FiCheck, FiX, FiClock, FiExternalLink } from 'react-icons/fi';
 
 const RecentActivity = ({ friends }) => {
   const [displayCount, setDisplayCount] = useState(10);
@@ -14,6 +14,7 @@ const RecentActivity = ({ friends }) => {
       friendName: friend.name,
       friendAvatar: friend.avatar || `https://ui-avatars.com/api/?name=${friend.name}&background=random`,
       problem: submission.title,
+      titleSlug: submission.titleSlug,
       difficulty: 'Medium', // LeetCode API doesn't provide difficulty in submissions
       status: submission.statusDisplay || 'Accepted',
       time: submission.timestamp ? new Date(submission.timestamp).toLocaleString() : 'Recently'
@@ -85,9 +86,25 @@ const RecentActivity = ({ friends }) => {
           </span>
         </div>
       </div>
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgb(31 41 55);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgb(59 130 246);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgb(37 99 235);
+        }
+      `}</style>
       <div 
         ref={scrollContainerRef}
-        className="p-6 max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
+        className="custom-scrollbar p-6 max-h-[600px] overflow-y-auto"
       >
         {recentActivity.length > 0 ? (
           <div className="space-y-4">
@@ -113,11 +130,23 @@ const RecentActivity = ({ friends }) => {
                       {getStatusIcon(activity.status)}
                     </div>
                   </div>
-                  <div className="mt-1 flex items-center space-x-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {activity.problem}
-                    </span>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getDifficultyColor(activity.difficulty)}`}>
+                  <div className="mt-1 flex items-center space-x-2 flex-wrap">
+                    {activity.titleSlug ? (
+                      <a
+                        href={`https://leetcode.com/problems/${activity.titleSlug}/`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 truncate inline-flex items-center gap-1 group"
+                      >
+                        <span className="truncate">{activity.problem}</span>
+                        <FiExternalLink className="h-3 w-3 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </a>
+                    ) : (
+                      <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        {activity.problem}
+                      </span>
+                    )}
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getDifficultyColor(activity.difficulty)} flex-shrink-0`}>
                       {activity.difficulty}
                     </span>
                   </div>
