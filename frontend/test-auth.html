@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    <div>
+        <h2>Test Registration</h2>
+        <button onclick="testRegister()">Test Register</button>
+    </div>
+    <div>
+        <h2>Test Login</h2>
+        <button onclick="testLogin()">Test Login</button>
+    </div>
+    <div>
+        <h2>Test Current User</h2>
+        <button onclick="testCurrentUser()">Test Current User</button>
+    </div>
+    <div>
+        <h2>Test Google Auth URL</h2>
+        <button onclick="testGoogleAuthURL()">Test Google Auth URL</button>
+    </div>
+
+    <script>
+        async function testRegister() {
+            try {
+                const response = await fetch('/api/v1/users/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'testuser' + Date.now(),
+                        email: 'test' + Date.now() + '@example.com',
+                        password: 'password123',
+                        fullName: 'Test User',
+                        leetcodeId: 'testleetcode'
+                    }),
+                });
+                const data = await response.json();
+                console.log('Register response:', data);
+                alert('Register: ' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                console.error('Register error:', error);
+                alert('Register Error: ' + error.message);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const response = await fetch('/api/v1/users/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    }),
+                });
+                const data = await response.json();
+                console.log('Login response:', data);
+                alert('Login: ' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login Error: ' + error.message);
+            }
+        }
+
+        async function testCurrentUser() {
+            try {
+                const response = await fetch('/api/v1/users/current', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                console.log('Current user response:', data);
+                alert('Current User: ' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                console.error('Current user error:', error);
+                alert('Current User Error: ' + error.message);
+            }
+        }
+
+        async function testGoogleAuthURL() {
+            try {
+                const response = await fetch('/api/v1/auth/google/url');
+                const data = await response.json();
+                console.log('Google auth URL response:', data);
+                alert('Google Auth URL: ' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                console.error('Google auth URL error:', error);
+                alert('Google Auth URL Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
