@@ -158,8 +158,16 @@ export const userAPI = {
   // Change password
   changePassword: async (passwordData) => {
     return makeRequest('/users/change-password', {
-      method: 'PATCH',
+      method: 'PUT',
       body: JSON.stringify(passwordData),
+    });
+  },
+
+  // Update user's display name
+  updateName: async (fullName) => {
+    return makeRequest('/users/update-name', {
+      method: 'PUT',
+      body: JSON.stringify({ fullName }),
     });
   },
 

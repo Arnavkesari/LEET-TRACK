@@ -8,6 +8,7 @@ import FriendProfile from '../pages/FriendProfile';
 import Challenges from '../pages/Challenges';
 import CompleteProfile from '../pages/CompleteProfile';
 import MyProfile from '../pages/MyProfile';
+import Settings from '../pages/Settings';
 
 // Loading component
 const LoadingSpinner = () => (
@@ -122,6 +123,14 @@ const AppRouter = () => {
         element={
           <ProtectedRoute>
             <Challenges />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/settings" 
+        element={
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         } 
       />

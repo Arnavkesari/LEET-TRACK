@@ -215,13 +215,30 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+
+  // Validation
+  if (!oldPassword || !newPassword || !confirmPassword) {
+    throw new ApiError(400, "All fields are required");
+  }
+
+  if (newPassword !== confirmPassword) {
+    throw new ApiError(400, "New password and confirm password do not match");
+  }
+
+  if (newPassword.length < 8) {
+    throw new ApiError(400, "Password must be at least 8 characters long");
+  }
+
+  if (oldPassword === newPassword) {
+    throw new ApiError(400, "New password must be different from old password");
+  }
 
   const user = await User.findById(req.user?._id);
   const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
 
   if (!isPasswordCorrect) {
-    throw new ApiError(400, "Invalid old password");
+    throw new ApiError(400, "Current password is incorrect");
   }
 
   user.password = newPassword;
@@ -259,6 +276,36 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, user, "Account details updated successfully"));
+});
+
+const updateUserName = asyncHandler(async (req, res) => {
+  const { fullName } = req.body;
+
+  if (!fullName || fullName.trim() === "") {
+    throw new ApiError(400, "Name is required");
+  }
+
+  if (fullName.trim().length < 2) {
+    throw new ApiError(400, "Name must be at least 2 characters long");
+  }
+
+  if (fullName.trim().length > 50) {
+    throw new ApiError(400, "Name must not exceed 50 characters");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        fullName: fullName.trim(),
+      },
+    },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Name updated successfully"));
 });
 
 const updateLeetCodeProfile = asyncHandler(async (req, res) => {
@@ -445,6 +492,7 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
+  updateUserName,
   updateLeetCodeProfile,
   getUserStats,
   setLeetCodeId,
