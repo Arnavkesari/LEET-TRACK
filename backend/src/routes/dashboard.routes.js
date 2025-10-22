@@ -5,6 +5,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { User } from '../models/user.model.js';
 import { Friend } from '../models/friend.model.js';
 import { verifyJWT } from '../middleware/auth.middleware.js';
+import { leetCodeScraper } from '../controllers/leetcodeScraper.controllers.js';
 
 const router = Router();
 
@@ -237,6 +238,89 @@ router.get('/dashboard-stats', verifyJWT, asyncHandler(async (req, res) => {
 
   } catch (error) {
     throw new ApiError(500, 'Error fetching dashboard statistics');
+  }
+}));
+
+// Refresh all friends data - scrape fresh data from LeetCode
+router.post('/refresh-all', verifyJWT, asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('friends');
+    
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    if (!user.friends || user.friends.length === 0) {
+      return res.status(200).json(
+        new ApiResponse(200, { 
+          message: 'No friends to refresh',
+          updated: 0,
+          failed: 0
+        }, 'No friends found')
+      );
+    }
+
+    // Get all friends
+    const friends = await Friend.find({ 
+      leetcodeId: { $in: user.friends },
+      isActive: true 
+    });
+
+    const results = {
+      total: friends.length,
+      updated: 0,
+      failed: 0,
+      errors: []
+    };
+
+    // Scrape data for each friend
+    for (const friend of friends) {
+      try {
+        // Mark as scraping
+        friend.scrapingStatus = 'scraping';
+        await friend.save();
+
+        // Scrape fresh data
+        const profileData = await leetCodeScraper.withRetry(async () => {
+          return await leetCodeScraper.scrapeLeetCodeProfile(friend.leetcodeId);
+        });
+
+        if (profileData) {
+          // Update friend data
+          friend.name = profileData.name || friend.name;
+          friend.leetcodeData = profileData;
+          friend.scrapingStatus = 'success';
+          friend.lastScrapedAt = new Date();
+          await friend.save();
+          results.updated++;
+        } else {
+          friend.scrapingStatus = 'failed';
+          friend.lastScrapingError = 'Profile not found';
+          await friend.save();
+          results.failed++;
+          results.errors.push({
+            leetcodeId: friend.leetcodeId,
+            error: 'Profile not found'
+          });
+        }
+      } catch (error) {
+        friend.scrapingStatus = 'failed';
+        friend.lastScrapingError = error.message;
+        await friend.save();
+        results.failed++;
+        results.errors.push({
+          leetcodeId: friend.leetcodeId,
+          error: error.message
+        });
+      }
+    }
+
+    return res.status(200).json(
+      new ApiResponse(200, results, `Refreshed ${results.updated} friends successfully`)
+    );
+
+  } catch (error) {
+    throw new ApiError(500, 'Error refreshing friends data');
   }
 }));
 

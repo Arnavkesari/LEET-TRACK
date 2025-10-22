@@ -62,7 +62,27 @@ const Dashboard = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
+    try {
+      // Call the refresh-all endpoint to scrape fresh data
+      const response = await dashboardAPI.refreshAllFriends();
+      console.log('Refresh results:', response);
+      
+      // Fetch updated data from database
+      await fetchData();
+      
+      // Show success message
+      if (response.updated > 0) {
+        console.log(`Successfully updated ${response.updated} friends`);
+      }
+      if (response.failed > 0) {
+        console.warn(`Failed to update ${response.failed} friends`);
+      }
+    } catch (err) {
+      console.error('Failed to refresh friends:', err);
+      setError('Failed to refresh data. Please try again.');
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleAddFriend = async (leetcodeId) => {

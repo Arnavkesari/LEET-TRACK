@@ -130,6 +130,11 @@ export const dashboardAPI = {
   getLeaderboard: async (sortBy = 'totalSolved', timeFilter = 'allTime') => {
     return makeRequest(`/dashboard/leaderboard?sortBy=${sortBy}&timeFilter=${timeFilter}`);
   },
+  refreshAllFriends: async () => {
+    return makeRequest('/dashboard/refresh-all', {
+      method: 'POST',
+    });
+  },
 };
 
 // User APIs
