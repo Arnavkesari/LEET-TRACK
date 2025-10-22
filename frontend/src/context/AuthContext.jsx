@@ -62,11 +62,19 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.googleAuth(token);
       setUser(response.user);
       setIsAuthenticated(true);
-      return { success: true, data: response };
+      return { 
+        success: true, 
+        data: response,
+        needsProfileCompletion: response.needsProfileCompletion 
+      };
     } catch (error) {
       console.error('Google login error:', error);
       return { success: false, error: error.message || 'Google login failed' };
     }
+  };
+
+  const updateUser = (userData) => {
+    setUser(userData);
   };
 
   const logout = async () => {
@@ -93,7 +101,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     googleLogin,
-    logout
+    logout,
+    setUser: updateUser
   };
 
   return (

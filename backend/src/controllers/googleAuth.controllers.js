@@ -85,11 +85,16 @@ const googleAuthCallback = asyncHandler(async (req, res) => {
       sameSite: 'lax'
     };
 
+    // Check if user needs to complete profile
+    const redirectPath = !user.leetcodeId 
+      ? '/complete-profile?auth=success' 
+      : '/dashboard?auth=success';
+
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", refreshToken, options)
-      .redirect(`${process.env.CORS_ORIGIN}/dashboard?auth=success`);
+      .redirect(`${process.env.CORS_ORIGIN}${redirectPath}`);
 
   } catch (error) {
     console.error('Google OAuth error:', error);
@@ -158,6 +163,9 @@ const googleAuthWithToken = asyncHandler(async (req, res) => {
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
+    // Check if user needs to complete profile (leetcodeId missing)
+    const needsProfileCompletion = !loggedInUser.leetcodeId;
+
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -168,7 +176,8 @@ const googleAuthWithToken = asyncHandler(async (req, res) => {
           {
             user: loggedInUser,
             accessToken,
-            refreshToken
+            refreshToken,
+            needsProfileCompletion
           },
           "User logged in successfully with Google"
         )

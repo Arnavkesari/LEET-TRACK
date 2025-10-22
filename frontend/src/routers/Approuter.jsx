@@ -6,6 +6,7 @@ import Dashboard from '../pages/Dashboard';
 import Leaderboard from '../pages/Leaderboard';
 import FriendProfile from '../pages/FriendProfile';
 import Challenges from '../pages/Challenges';
+import CompleteProfile from '../pages/CompleteProfile';
 
 // Loading component
 const LoadingSpinner = () => (
@@ -67,6 +68,14 @@ const AppRouter = () => {
       />
       
       {/* Protected Routes */}
+      <Route 
+        path="/complete-profile" 
+        element={
+          <ProtectedRoute>
+            <CompleteProfile />
+          </ProtectedRoute>
+        } 
+      />
       <Route 
         path="/dashboard" 
         element={

@@ -80,6 +80,14 @@ export const authAPI = {
       body: JSON.stringify({ token }),
     });
   },
+
+  // Set LeetCode ID (for profile completion)
+  setLeetCodeId: async (leetcodeId) => {
+    return makeRequest('/users/set-leetcode-id', {
+      method: 'POST',
+      body: JSON.stringify({ leetcodeId }),
+    });
+  },
 };
 
 // Friends APIs

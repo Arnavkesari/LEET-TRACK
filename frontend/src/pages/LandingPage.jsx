@@ -37,6 +37,8 @@ const LandingPage = () => {
 
     if (authStatus === 'success') {
       // OAuth successful, the backend should have set cookies
+      // Backend will redirect to /complete-profile or /dashboard based on leetcodeId
+      // This landing page check is just a fallback
       navigate('/dashboard');
     } else if (authStatus === 'error') {
       alert(`Authentication failed: ${message || 'Unknown error'}`);

@@ -274,6 +274,35 @@ const getUserStats = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, stats, "User stats fetched successfully"));
 });
 
+const setLeetCodeId = asyncHandler(async (req, res) => {
+  const { leetcodeId } = req.body;
+
+  if (!leetcodeId || leetcodeId.trim() === "") {
+    throw new ApiError(400, "LeetCode username is required");
+  }
+
+  // Optional: Verify LeetCode username exists (you can add verification logic here)
+  const trimmedLeetcodeId = leetcodeId.trim().toLowerCase();
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        leetcodeId: trimmedLeetcodeId,
+      },
+    },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "LeetCode username set successfully"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -284,4 +313,5 @@ export {
   updateAccountDetails,
   updateLeetCodeProfile,
   getUserStats,
+  setLeetCodeId,
 };
