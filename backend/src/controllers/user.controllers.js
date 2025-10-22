@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
+import { leetCodeScraper } from "./leetcodeScraper.controllers.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
@@ -40,13 +41,41 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(409, "User with email or username already exists");
   }
 
-  const user = await User.create({
+  // Prepare user data
+  const userData = {
     fullName,
     email,
     password,
     username: username.toLowerCase(),
-    leetcodeId,
-  });
+    leetcodeId: leetcodeId ? leetcodeId.trim().toLowerCase() : undefined,
+  };
+
+  // If leetcodeId is provided, scrape the data before creating user
+  if (leetcodeId && leetcodeId.trim()) {
+    try {
+      const leetcodeData = await leetCodeScraper.scrapeLeetCodeProfile(leetcodeId.trim().toLowerCase());
+      
+      if (leetcodeData) {
+        userData.leetcodeData = {
+          totalSolved: leetcodeData.totalSolved || 0,
+          easySolved: leetcodeData.easySolved || 0,
+          mediumSolved: leetcodeData.mediumSolved || 0,
+          hardSolved: leetcodeData.hardSolved || 0,
+          ranking: leetcodeData.ranking || 0,
+          contestRating: leetcodeData.contestRating || 0,
+          streak: leetcodeData.streak || 0,
+          acceptanceRate: leetcodeData.acceptanceRate || 0,
+          recentSubmissions: leetcodeData.recentSubmissions || [],
+          lastUpdated: new Date()
+        };
+      }
+    } catch (error) {
+      console.error('Error scraping LeetCode profile during registration:', error);
+      // Continue with registration even if scraping fails
+    }
+  }
+
+  const user = await User.create(userData);
 
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
@@ -281,26 +310,131 @@ const setLeetCodeId = asyncHandler(async (req, res) => {
     throw new ApiError(400, "LeetCode username is required");
   }
 
-  // Optional: Verify LeetCode username exists (you can add verification logic here)
   const trimmedLeetcodeId = leetcodeId.trim().toLowerCase();
 
-  const user = await User.findByIdAndUpdate(
-    req.user?._id,
-    {
-      $set: {
-        leetcodeId: trimmedLeetcodeId,
+  try {
+    // Scrape LeetCode profile data
+    const leetcodeData = await leetCodeScraper.scrapeLeetCodeProfile(trimmedLeetcodeId);
+
+    if (!leetcodeData) {
+      throw new ApiError(404, "LeetCode profile not found. Please check the username.");
+    }
+
+    // Update user with leetcodeId and scraped data
+    const user = await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set: {
+          leetcodeId: trimmedLeetcodeId,
+          leetcodeData: {
+            totalSolved: leetcodeData.totalSolved || 0,
+            easySolved: leetcodeData.easySolved || 0,
+            mediumSolved: leetcodeData.mediumSolved || 0,
+            hardSolved: leetcodeData.hardSolved || 0,
+            ranking: leetcodeData.ranking || 0,
+            contestRating: leetcodeData.contestRating || 0,
+            streak: leetcodeData.streak || 0,
+            acceptanceRate: leetcodeData.acceptanceRate || 0,
+            recentSubmissions: leetcodeData.recentSubmissions || [],
+            lastUpdated: new Date()
+          }
+        },
       },
-    },
-    { new: true }
-  ).select("-password -refreshToken");
+      { new: true }
+    ).select("-password -refreshToken");
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "LeetCode profile set and data scraped successfully"));
+
+  } catch (error) {
+    console.error('Error scraping LeetCode profile:', error);
+    throw new ApiError(500, error.message || "Failed to scrape LeetCode profile");
+  }
+});
+
+const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user?._id).select("-password -refreshToken");
 
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
+  if (!user.leetcodeId) {
+    throw new ApiError(400, "User has not set LeetCode username yet");
+  }
+
+  // Transform user data to match friend profile structure
+  const profileData = {
+    _id: user._id,
+    leetcodeId: user.leetcodeId,
+    name: user.fullName,
+    avatar: user.avatar,
+    email: user.email,
+    username: user.username,
+    totalSolved: user.leetcodeData?.totalSolved || 0,
+    easySolved: user.leetcodeData?.easySolved || 0,
+    mediumSolved: user.leetcodeData?.mediumSolved || 0,
+    hardSolved: user.leetcodeData?.hardSolved || 0,
+    ranking: user.leetcodeData?.ranking || 0,
+    contestRating: user.leetcodeData?.contestRating || 0,
+    streak: user.leetcodeData?.streak || 0,
+    acceptanceRate: user.leetcodeData?.acceptanceRate || 0,
+    recentSubmissions: user.leetcodeData?.recentSubmissions || [],
+    lastUpdated: user.leetcodeData?.lastUpdated || user.updatedAt,
+    isCurrentUser: true
+  };
+
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "LeetCode username set successfully"));
+    .json(new ApiResponse(200, profileData, "User profile fetched successfully"));
+});
+
+const refreshUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user?._id);
+
+  if (!user || !user.leetcodeId) {
+    throw new ApiError(400, "User has not set LeetCode username");
+  }
+
+  try {
+    // Scrape latest data
+    const leetcodeData = await leetCodeScraper.scrapeLeetCodeProfile(user.leetcodeId);
+
+    if (!leetcodeData) {
+      throw new ApiError(404, "Failed to fetch LeetCode data");
+    }
+
+    // Update user's leetcode data
+    user.leetcodeData = {
+      totalSolved: leetcodeData.totalSolved || 0,
+      easySolved: leetcodeData.easySolved || 0,
+      mediumSolved: leetcodeData.mediumSolved || 0,
+      hardSolved: leetcodeData.hardSolved || 0,
+      ranking: leetcodeData.ranking || 0,
+      contestRating: leetcodeData.contestRating || 0,
+      streak: leetcodeData.streak || 0,
+      acceptanceRate: leetcodeData.acceptanceRate || 0,
+      recentSubmissions: leetcodeData.recentSubmissions || [],
+      lastUpdated: new Date()
+    };
+
+    await user.save();
+
+    const updatedUser = await User.findById(user._id).select("-password -refreshToken");
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, updatedUser, "Profile refreshed successfully"));
+
+  } catch (error) {
+    console.error('Error refreshing user profile:', error);
+    throw new ApiError(500, "Failed to refresh profile");
+  }
 });
 
 export {
@@ -314,4 +448,6 @@ export {
   updateLeetCodeProfile,
   getUserStats,
   setLeetCodeId,
+  getUserProfile,
+  refreshUserProfile,
 };

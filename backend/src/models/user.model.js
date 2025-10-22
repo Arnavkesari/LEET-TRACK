@@ -69,6 +69,17 @@ const userSchema = new mongoose.Schema({
       type: Number,
       default: 0
     },
+    acceptanceRate: {
+      type: Number,
+      default: 0
+    },
+    recentSubmissions: [{
+      title: String,
+      titleSlug: String,
+      timestamp: String,
+      statusDisplay: String,
+      lang: String
+    }],
     lastUpdated: {
       type: Date,
       default: Date.now

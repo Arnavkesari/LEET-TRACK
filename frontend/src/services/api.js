@@ -171,6 +171,18 @@ export const userAPI = {
     });
   },
 
+  // Get user's own profile (with LeetCode data)
+  getMyProfile: async () => {
+    return makeRequest('/users/my-profile');
+  },
+
+  // Refresh user's own profile data
+  refreshMyProfile: async () => {
+    return makeRequest('/users/refresh-profile', {
+      method: 'POST',
+    });
+  },
+
   // Get user stats
   getUserStats: async () => {
     return makeRequest('/users/stats');

@@ -14,28 +14,39 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import LeaderboardCard from '../components/LeaderboardCard';
 import FilterDropdown from '../components/FilterDropdown';
+import { useAuth } from '../context/AuthContext';
 
 const Leaderboard = () => {
+  const { user } = useAuth();
   const [friends, setFriends] = useState([]);
+  const [userProfile, setUserProfile] = useState(null);
   const [filteredFriends, setFilteredFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('totalSolved');
   const [timeFilter, setTimeFilter] = useState('allTime');
 
-  // Fetch real leaderboard data
+  // Fetch real leaderboard data and user profile
   useEffect(() => {
     const fetchLeaderboardData = async () => {
       try {
         setLoading(true);
-        const { friendsAPI } = await import('../services/api');
-        const leaderboardData = await friendsAPI.getLeaderboard(sortBy, timeFilter);
-        setFriends(leaderboardData || []);
-        setFilteredFriends(leaderboardData || []);
+        const { dashboardAPI, userAPI } = await import('../services/api');
+        
+        // Fetch both friends leaderboard and user profile
+        const [dashboardData, userProfileData] = await Promise.all([
+          dashboardAPI.getLeaderboard(sortBy, timeFilter),
+          userAPI.getMyProfile().catch(() => null) // Don't fail if user hasn't set profile
+        ]);
+
+        // Extract leaderboard array from response
+        const leaderboardArray = dashboardData?.leaderboard || dashboardData || [];
+        setFriends(leaderboardArray);
+        setUserProfile(userProfileData);
+        
       } catch (error) {
         console.error('Failed to fetch leaderboard:', error);
         setFriends([]);
-        setFilteredFriends([]);
       } finally {
         setLoading(false);
       }
@@ -44,21 +55,76 @@ const Leaderboard = () => {
     fetchLeaderboardData();
   }, [sortBy, timeFilter]);
 
-  // Filter logic (sorting is done on backend)
+  // Merge user profile with friends and sort
   useEffect(() => {
-    let filtered = friends.filter(friend =>
-      friend.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      friend.leetcodeId?.toLowerCase().includes(searchTerm.toLowerCase())
+    let allParticipants = [...friends];
+
+    // Add user to leaderboard if they have a profile
+    if (userProfile && userProfile.leetcodeId) {
+      // Transform user data to match Friend structure
+      const userEntry = {
+        _id: userProfile._id,
+        leetcodeId: userProfile.leetcodeId,
+        name: userProfile.name || user?.fullName,
+        avatar: userProfile.avatar || user?.avatar || '',
+        isCurrentUser: true,
+        // Wrap LeetCode data in leetcodeData object to match Friend structure
+        leetcodeData: {
+          totalSolved: userProfile.totalSolved || 0,
+          easySolved: userProfile.easySolved || 0,
+          mediumSolved: userProfile.mediumSolved || 0,
+          hardSolved: userProfile.hardSolved || 0,
+          ranking: userProfile.ranking || 0,
+          contestRating: userProfile.contestRating || 0,
+          streak: userProfile.streak || 0,
+          acceptanceRate: userProfile.acceptanceRate || 0,
+          weeklyProgress: userProfile.weeklyProgress || 0
+        },
+        // Also keep values at root level for sorting
+        totalSolved: userProfile.totalSolved || 0,
+        easySolved: userProfile.easySolved || 0,
+        mediumSolved: userProfile.mediumSolved || 0,
+        hardSolved: userProfile.hardSolved || 0,
+        ranking: userProfile.ranking || 0,
+        contestRating: userProfile.contestRating || 0,
+        streak: userProfile.streak || 0,
+        weeklyProgress: userProfile.weeklyProgress || 0
+      };
+      allParticipants.push(userEntry);
+    }
+
+    // Filter by search term
+    let filtered = allParticipants.filter(participant =>
+      participant.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      participant.leetcodeId?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Sort based on selected criteria
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      // Get values from leetcodeData or root level
+      if (sortBy === 'ranking') {
+        // For ranking, lower is better
+        aValue = a.leetcodeData?.ranking || a.ranking || 999999999;
+        bValue = b.leetcodeData?.ranking || b.ranking || 999999999;
+        return aValue - bValue; // Ascending order for ranking
+      } else {
+        // For other metrics, higher is better
+        aValue = a.leetcodeData?.[sortBy] || a[sortBy] || 0;
+        bValue = b.leetcodeData?.[sortBy] || b[sortBy] || 0;
+        return bValue - aValue; // Descending order
+      }
+    });
+
     // Add current rank based on position
-    filtered = filtered.map((friend, index) => ({
-      ...friend,
+    filtered = filtered.map((participant, index) => ({
+      ...participant,
       currentRank: index + 1
     }));
 
     setFilteredFriends(filtered);
-  }, [friends, searchTerm]);
+  }, [friends, userProfile, searchTerm, sortBy, user]);
 
   const sortOptions = [
     { value: 'totalSolved', label: 'Total Problems Solved' },

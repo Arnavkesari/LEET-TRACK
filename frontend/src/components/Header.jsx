@@ -114,11 +114,11 @@ const Header = () => {
                 >
                   <div className="py-2">
                     <a
-                      href="/profile"
+                      href="/profile/me"
                       className="flex items-center gap-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
                     >
                       <FaUser className="text-sm" />
-                      Profile
+                      My Profile
                     </a>
                     <div className="border-t border-white/20 my-1"></div>
                     <button
