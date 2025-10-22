@@ -264,7 +264,9 @@ const Dashboard = () => {
         </div>
       </main>
 
-      <Footer />
+      <div className="opacity-100">
+        <Footer />
+      </div>
 
       {/* Add Friend Modal */}
       <AddFriendModal

@@ -455,7 +455,10 @@ const FriendProfile = () => {
         </div>
       </main>
 
-      <Footer />
+      {/* Footer - appears immediately without waiting for animations */}
+      <div className="opacity-100">
+        <Footer />
+      </div>
     </div>
   );
 };
