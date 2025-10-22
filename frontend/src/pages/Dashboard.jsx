@@ -196,6 +196,7 @@ const Dashboard = () => {
             value={stats.recentSolves}
             icon={FiTrendingUp}
             color="orange"
+            subtitle="Last 7 days"
           />
         </motion.div>
 

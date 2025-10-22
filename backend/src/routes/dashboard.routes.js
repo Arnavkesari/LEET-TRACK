@@ -206,13 +206,29 @@ router.get('/dashboard-stats', verifyJWT, asyncHandler(async (req, res) => {
     });
     
     // Calculate statistics
+    // Calculate recent solves (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentSolves = friends.reduce((total, friend) => {
+      if (!friend.leetcodeData?.recentSubmissions) return total;
+      
+      // Count accepted submissions in last 7 days
+      const recentCount = friend.leetcodeData.recentSubmissions.filter(submission => {
+        const submissionDate = new Date(submission.timestamp * 1000); // Convert Unix timestamp to milliseconds
+        return submissionDate >= sevenDaysAgo;
+      }).length;
+      
+      return total + recentCount;
+    }, 0);
+    
     const stats = {
       totalFriends: friends.length,
       totalProblems: friends.reduce((sum, f) => sum + (f.leetcodeData.totalSolved || 0), 0),
       averageRating: friends.length > 0 
         ? Math.round(friends.reduce((sum, f) => sum + (f.leetcodeData.contestRating || 0), 0) / friends.length)
         : 0,
-      recentSolves: friends.reduce((sum, f) => sum + (f.leetcodeData.weeklyProgress || 0), 0)
+      recentSolves: recentSolves
     };
 
     // Get recent activity
