@@ -6,7 +6,6 @@ import {
   FiUsers, 
   FiFilter,
   FiSearch,
-  FiCalendar,
   FiTarget,
   FiZap
 } from 'react-icons/fi';
@@ -24,7 +23,6 @@ const Leaderboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('totalSolved');
-  const [timeFilter, setTimeFilter] = useState('allTime');
 
   // Fetch real leaderboard data and user profile
   useEffect(() => {
@@ -35,7 +33,7 @@ const Leaderboard = () => {
         
         // Fetch both friends leaderboard and user profile
         const [dashboardData, userProfileData] = await Promise.all([
-          dashboardAPI.getLeaderboard(sortBy, timeFilter),
+          dashboardAPI.getLeaderboard(sortBy, 'allTime'),
           userAPI.getMyProfile().catch(() => null) // Don't fail if user hasn't set profile
         ]);
 
@@ -53,7 +51,7 @@ const Leaderboard = () => {
     };
 
     fetchLeaderboardData();
-  }, [sortBy, timeFilter]);
+  }, [sortBy]);
 
   // Merge user profile with friends and sort
   useEffect(() => {
@@ -132,13 +130,6 @@ const Leaderboard = () => {
     { value: 'streak', label: 'Current Streak' },
     { value: 'weeklyProgress', label: 'Weekly Progress' },
     { value: 'ranking', label: 'Global Ranking' }
-  ];
-
-  const timeFilterOptions = [
-    { value: 'allTime', label: 'All Time' },
-    { value: 'thisMonth', label: 'This Month' },
-    { value: 'thisWeek', label: 'This Week' },
-    { value: 'today', label: 'Today' }
   ];
 
   if (loading) {
@@ -243,13 +234,6 @@ const Leaderboard = () => {
                 onChange={setSortBy}
                 placeholder="Sort by"
                 icon={FiFilter}
-              />
-              <FilterDropdown
-                options={timeFilterOptions}
-                value={timeFilter}
-                onChange={setTimeFilter}
-                placeholder="Time period"
-                icon={FiCalendar}
               />
             </div>
           </div>
