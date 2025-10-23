@@ -287,7 +287,7 @@ const MyProfile = () => {
                   </div>
                   {submission.timestamp && (
                     <p className="text-xs text-gray-500 mt-2">
-                      {new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString()}
+                      {submission.timestamp}
                     </p>
                   )}
                 </motion.a>
