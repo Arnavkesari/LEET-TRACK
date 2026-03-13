@@ -8,7 +8,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  `http://localhost:8000/api/v1/auth/google/callback` // Backend callback URL
+  process.env.GOOGLE_REDIRECT_URI,
 );
 
 // Generate Google OAuth URL
