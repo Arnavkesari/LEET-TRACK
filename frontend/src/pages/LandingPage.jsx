@@ -148,18 +148,14 @@ const LandingPage = () => {
       setLoading(true);
       
       // Get Google Auth URL from backend
-      const response = await fetch('/api/v1/auth/google/url', {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      console.log(data)
-      if (data.success && data.data.authUrl) {
-        // Redirect to Google OAuth
-        window.location.href = data.data.authUrl;
+      const data = await authAPI.getGoogleAuthURL();
+      if (data?.authUrl) {
+        window.location.href = data.authUrl;
       } else {
         alert('Failed to get Google auth URL');
         setLoading(false);
       }
+      
     } catch (error) {
       console.error('Google auth error:', error);
       alert('Failed to initiate Google authentication');

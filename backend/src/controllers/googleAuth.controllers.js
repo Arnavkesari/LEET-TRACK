@@ -8,7 +8,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI,
+  process.env.GOOGLE_REDIRECT_URI || "http://localhost:8000/api/v1/auth/google/callback",
 );
 
 // Generate Google OAuth URL
@@ -79,10 +79,12 @@ const googleAuthCallback = asyncHandler(async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     // Set cookies
-    const options = {
+    const isProd = process.env.NODE_ENV === 'production';
+
+    const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax'
     };
 
     // Check if user needs to complete profile
@@ -92,8 +94,8 @@ const googleAuthCallback = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", refreshToken, options)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
       .redirect(`${process.env.CORS_ORIGIN}${redirectPath}`);
 
   } catch (error) {
@@ -155,10 +157,12 @@ const googleAuthWithToken = asyncHandler(async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     // Set cookies
-    const options = {
+    const isProd = process.env.NODE_ENV === 'production';
+
+    const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax'
     };
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
@@ -168,8 +172,8 @@ const googleAuthWithToken = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", refreshToken, options)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
       .json(
         new ApiResponse(
           200,

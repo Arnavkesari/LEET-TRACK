@@ -119,15 +119,18 @@ const loginUser = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
 
-  const options = {
+  const isProd = process.env.NODE_ENV === 'production';
+  
+  const cookieOptions = {
     httpOnly: true,
-    secure: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax'
   };
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
     .json(
       new ApiResponse(
         200,
@@ -154,15 +157,18 @@ const logoutUser = asyncHandler(async (req, res) => {
     }
   );
 
-  const options = {
+  const isProd = process.env.NODE_ENV === 'production';
+
+  const cookieOptions = {
     httpOnly: true,
-    secure: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax'
   };
 
   return res
     .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken",cookieOptions)
     .json(new ApiResponse(200, {}, "User logged Out"));
 });
 
@@ -190,18 +196,21 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       throw new ApiError(401, "Refresh token is expired or used");
     }
 
-    const options = {
-      httpOnly: true,
-      secure: true,
-    };
+    const isProd = process.env.NODE_ENV === 'production';
 
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax'
+    };
+    
     const { accessToken, refreshToken: newRefreshToken } =
       await generateAccessAndRefreshTokens(user._id);
 
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newRefreshToken, options)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", newRefreshToken, cookieOptions)
       .json(
         new ApiResponse(
           200,
