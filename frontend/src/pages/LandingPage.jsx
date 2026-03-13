@@ -152,7 +152,7 @@ const LandingPage = () => {
         credentials: 'include'
       });
       const data = await response.json();
-      
+      console.log(data)
       if (data.success && data.data.authUrl) {
         // Redirect to Google OAuth
         window.location.href = data.data.authUrl;
